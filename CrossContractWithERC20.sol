@@ -43,6 +43,6 @@ contract CrossFunctionERC20 {
     }
 
     function validateWithdraw(uint256 amount, address user) internal {
-        token.safeTransfer(user, amount); // External call to potentially malicious contract
+        token.safeTransfer(user, amount); 
     }
 }
