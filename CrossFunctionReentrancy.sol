@@ -32,7 +32,7 @@ contract CrossFunctionReentrancy {
     }
 
     function validateWithdraw(uint256 amount, address user) internal {
-        (bool sent, ) = user.call{value: balances[user]}("");
+        (bool sent, ) = user.call{value: amount}("");
         require(sent, "Failed to send");
     }
 }
