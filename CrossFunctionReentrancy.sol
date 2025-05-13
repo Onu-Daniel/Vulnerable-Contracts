@@ -5,7 +5,16 @@ contract CrossFunctionReentrancy {
     mapping(address => uint256) public balances;
     mapping(address => bool) public withdrawalPending;
 
-    function deposit() external payable {
+    bool private locked;
+
+    modifier noReentrant() {
+        require(!locked, "Reentrancy blocked");
+        locked = true;
+        _;
+        locked = false;
+    }
+
+    function deposit() external payable noReentrant {
         balances[msg.sender] += msg.value;
     }
 
@@ -17,13 +26,12 @@ contract CrossFunctionReentrancy {
 
         validateWithdraw(amount, msg.sender);
 
-        // State update after external call (vulnerable)
+        // Vulnerability: State update happens after external call
         balances[msg.sender] -= amount;
         withdrawalPending[msg.sender] = false;
     }
 
     function validateWithdraw(uint256 amount, address user) internal {
-        // External call using full balance, not the passed amount (intentional bug)
         (bool sent, ) = user.call{value: balances[user]}("");
         require(sent, "Failed to send");
     }
