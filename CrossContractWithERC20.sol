@@ -37,7 +37,7 @@ contract CrossFunctionERC20 {
 
         validateWithdraw(amount, msg.sender);
 
-        // Vulnerability: State updated after external call
+   
         balances[msg.sender] -= amount;
         withdrawalPending[msg.sender] = false;
     }
