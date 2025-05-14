@@ -20,9 +20,6 @@ contract VulnerableSignaturePermit {
         owner = msg.sender;
     }
 
-    function deposit() external payable {
-        balances[msg.sender] += msg.value;
-    }
 
     // ❌ No nonce, replayable
     function permit(
