@@ -3,15 +3,15 @@ pragma solidity ^0.8.0;
 
 contract VulnerableSignaturePermit {
     mapping(address => uint256) public balances;
-    mapping(address => uint256) public nonces; // ✅ Add nonce mapping
+    mapping(address => uint256) public nonces;
 
     address public owner;
 
     bytes32 public constant PERMIT_TYPEHASH = keccak256(
-        "Permit(address owner,address spender,uint256 value,uint256 nonce)"
+        "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
     );
 
-    // ❌ Still missing chainId and contract address — replayable across chains
+    // ⚠️ Still vulnerable to cross-chain replay (hardcoded domain)
     bytes32 public DOMAIN_SEPARATOR = keccak256(
         abi.encode(
             keccak256("EIP712Domain(string name,string version)"),
@@ -32,11 +32,13 @@ contract VulnerableSignaturePermit {
         address from,
         address to,
         uint256 value,
+        uint256 deadline,
         uint8 v, bytes32 r, bytes32 s
     ) external {
-        uint256 nonce = nonces[from]; // ✅ Get current nonce
+        require(block.timestamp <= deadline, "Expired signature");
 
-        // ✅ Include nonce in message hash
+        uint256 nonce = nonces[from];
+
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
@@ -46,7 +48,8 @@ contract VulnerableSignaturePermit {
                     from,
                     to,
                     value,
-                    nonce
+                    nonce,
+                    deadline
                 ))
             )
         );
@@ -54,9 +57,8 @@ contract VulnerableSignaturePermit {
         address recovered = ecrecover(digest, v, r, s);
         require(recovered == from, "Invalid signature");
 
-        nonces[from]++; // ✅ Increment nonce to prevent replay
+        nonces[from]++;
 
-        // Transfer funds
         require(balances[from] >= value, "Insufficient");
         balances[from] -= value;
         balances[to] += value;
