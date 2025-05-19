@@ -9,5 +9,6 @@ contract SoladyTransfer {
 
         // Transfer tokens from sender to recipient
         ERC20(token).transferFrom(msg.sender, to, amount);
+
     }
 }
